@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>SigNoz Contributor Guide</title>
+  <link rel="stylesheet" href="./styles.css"/>
+</head>
+<body>
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-dot"></div>
+    <span class="logo-text">SigNoz</span>
+    <span class="logo-badge">Internal</span>
+  </div>
+
+  <span class="nav-section">Architecture</span>
+  <a class="nav-item" data-id="arch-overview">System Overview</a>
+  <a class="nav-item nav-sub" data-id="arch-components">Core Components</a>
+  <a class="nav-item nav-sub" data-id="arch-frontend">Frontend Architecture</a>
+  <a class="nav-item nav-sub" data-id="arch-backend">Backend Architecture</a>
+  <a class="nav-item nav-sub" data-id="arch-dataflow">Data Flow</a>
+
+  <span class="nav-section">Getting Started</span>
+  <a class="nav-item" data-id="repo-structure">Repo Structure</a>
+  <a class="nav-item" data-id="dev-env">Dev Environment</a>
+  <a class="nav-item nav-sub" data-id="dev-clickhouse">ClickHouse</a>
+  <a class="nav-item nav-sub" data-id="dev-backend">Backend</a>
+  <a class="nav-item nav-sub" data-id="dev-frontend">Frontend</a>
+  <a class="nav-item" data-id="deployment">Deployment Options</a>
+
+  <span class="nav-section">Contributing</span>
+  <a class="nav-item" data-id="issues">Finding Issues</a>
+  <a class="nav-item" data-id="pr-workflow">PR Workflow</a>
+  <a class="nav-item" data-id="commit-convention">Commit Convention</a>
+
+  <span class="nav-section">Go Backend Standards</span>
+  <a class="nav-item" data-id="go-overview">Overview & Style Guides</a>
+  <a class="nav-item nav-sub" data-id="go-packages">Packages</a>
+  <a class="nav-item nav-sub" data-id="go-abstractions">Abstractions</a>
+  <a class="nav-item nav-sub" data-id="go-errors">Errors</a>
+  <a class="nav-item nav-sub" data-id="go-provider">Provider Pattern</a>
+  <a class="nav-item nav-sub" data-id="go-service">Service Lifecycle</a>
+  <a class="nav-item nav-sub" data-id="go-handler">HTTP Handlers</a>
+  <a class="nav-item nav-sub" data-id="go-endpoint">Endpoint Design</a>
+  <a class="nav-item nav-sub" data-id="go-flagger">Feature Flags</a>
+  <a class="nav-item nav-sub" data-id="go-sql">SQL & Migrations</a>
+  <a class="nav-item nav-sub" data-id="go-query-range">Query Range v5</a>
+
+  <span class="nav-section">Testing</span>
+  <a class="nav-item" data-id="testing">Testing Guide</a>
+  <a class="nav-item nav-sub" data-id="go-integration">Integration Tests</a>
+
+  <span class="nav-section">Frontend Standards</span>
+  <a class="nav-item" data-id="fe-standards">Code Standards</a>
+  <a class="nav-item nav-sub" data-id="fe-onboarding">Onboarding Config</a>
+
+  <span class="nav-section">Other</span>
+  <a class="nav-item" data-id="other-repos">Org Repositories</a>
+  <a class="nav-item" data-id="community">Community & Help</a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- Hero -->
+<div class="hero section" id="top">
+  <div class="hero-label">Internal Team Contributor Guide</div>
+  <h1>Contributing to SigNoz</h1>
+  <p class="text-muted mb-0">Single authoritative reference — architecture, dev environment, Go standards, frontend patterns, and testing. Everything in one place.</p>
+  <div class="badge-row">
+    <span class="badge badge-orange">Go 1.24</span>
+    <span class="badge badge-blue">React 18 + TypeScript</span>
+    <span class="badge badge-green">OpenTelemetry</span>
+    <span class="badge badge-purple">ClickHouse</span>
+    <span class="badge badge-yellow">Python Integration Tests</span>
+  </div>
+</div>
+
+<!-- ═══ ARCHITECTURE OVERVIEW ═══ -->
+<h2 class="section" id="arch-overview">System Architecture Overview</h2>
+<p>SigNoz is an OpenTelemetry-native observability platform. Telemetry flows from instrumented apps → OTel Collector → ClickHouse → Go backend → React frontend. All backend services are packaged as a single binary.</p>
+
+<div class="diagram-wrap">
+  <div class="diagram-title">High-Level System Architecture</div>
+  <svg viewBox="0 0 820 400" xmlns="http://www.w3.org/2000/svg" class="diagram-svg diagram-svg-max-820">
+    <defs>
+      <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4b5e7f"/></marker>
+      <marker id="arr-o" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f97316"/></marker>
+    </defs>
+    <rect x="16" y="50" width="128" height="300" rx="8" fill="#1a2236" stroke="#2a3347" stroke-width="1.5"/>
+    <text x="80" y="72" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="700" letter-spacing="1">APPLICATIONS</text>
+    <rect x="30" y="82" width="100" height="30" rx="5" fill="#243045" stroke="#3b82f6" stroke-width="1"/>
+    <text x="80" y="101" text-anchor="middle" fill="#60a5fa" font-size="11">Service A</text>
+    <rect x="30" y="120" width="100" height="30" rx="5" fill="#243045" stroke="#3b82f6" stroke-width="1"/>
+    <text x="80" y="139" text-anchor="middle" fill="#60a5fa" font-size="11">Service B</text>
+    <rect x="30" y="158" width="100" height="30" rx="5" fill="#243045" stroke="#3b82f6" stroke-width="1"/>
+    <text x="80" y="177" text-anchor="middle" fill="#60a5fa" font-size="11">Service C</text>
+    <text x="80" y="216" text-anchor="middle" fill="#8892a4" font-size="10">OTel SDK</text>
+    <text x="80" y="231" text-anchor="middle" fill="#5c6370" font-size="9">Traces · Metrics · Logs</text>
+    <line x1="144" y1="190" x2="190" y2="190" stroke="#4b5e7f" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="167" y="183" text-anchor="middle" fill="#5c6370" font-size="9">OTLP</text>
+    <rect x="192" y="120" width="144" height="148" rx="8" fill="#1a2236" stroke="#f97316" stroke-width="1.5"/>
+    <text x="264" y="142" text-anchor="middle" fill="#fb923c" font-size="9" font-weight="700" letter-spacing="1">OTEL COLLECTOR</text>
+    <rect x="206" y="152" width="116" height="22" rx="4" fill="#243045"/>
+    <text x="264" y="167" text-anchor="middle" fill="#e2e8f0" font-size="10">Receivers (OTLP/Jaeger)</text>
+    <rect x="206" y="180" width="116" height="22" rx="4" fill="#243045"/>
+    <text x="264" y="195" text-anchor="middle" fill="#e2e8f0" font-size="10">Processors (batch/enrich)</text>
+    <rect x="206" y="208" width="116" height="22" rx="4" fill="#243045"/>
+    <text x="264" y="223" text-anchor="middle" fill="#e2e8f0" font-size="10">Exporters → ClickHouse</text>
+    <text x="264" y="254" text-anchor="middle" fill="#5c6370" font-size="9">signoz-otel-collector v0.129.4</text>
+    <line x1="336" y1="190" x2="382" y2="190" stroke="#f97316" stroke-width="1.5" marker-end="url(#arr-o)"/>
+    <text x="359" y="183" text-anchor="middle" fill="#fb923c" font-size="9">writes</text>
+    <rect x="384" y="80" width="152" height="240" rx="8" fill="#1a2236" stroke="#10b981" stroke-width="1.5"/>
+    <text x="460" y="102" text-anchor="middle" fill="#34d399" font-size="9" font-weight="700" letter-spacing="1">CLICKHOUSE</text>
+    <rect x="398" y="112" width="124" height="26" rx="4" fill="#1c3028" stroke="#10b981" stroke-width="0.8"/>
+    <text x="460" y="129" text-anchor="middle" fill="#6ee7b7" font-size="10">signoz_traces</text>
+    <rect x="398" y="144" width="124" height="26" rx="4" fill="#1c3028" stroke="#10b981" stroke-width="0.8"/>
+    <text x="460" y="161" text-anchor="middle" fill="#6ee7b7" font-size="10">signoz_metrics</text>
+    <rect x="398" y="176" width="124" height="26" rx="4" fill="#1c3028" stroke="#10b981" stroke-width="0.8"/>
+    <text x="460" y="193" text-anchor="middle" fill="#6ee7b7" font-size="10">signoz_logs</text>
+    <rect x="398" y="208" width="124" height="26" rx="4" fill="#1c3028" stroke="#10b981" stroke-width="0.8"/>
+    <text x="460" y="225" text-anchor="middle" fill="#6ee7b7" font-size="10">attributes_metadata</text>
+    <text x="460" y="260" text-anchor="middle" fill="#5c6370" font-size="9">columnar OLAP · TTL · replicated</text>
+    <line x1="536" y1="178" x2="580" y2="178" stroke="#4b5e7f" stroke-width="1.5" marker-end="url(#arr)"/>
+    <line x1="580" y1="202" x2="536" y2="202" stroke="#4b5e7f" stroke-width="1.5" marker-end="url(#arr)"/>
+    <text x="558" y="193" text-anchor="middle" fill="#5c6370" font-size="9">SQL</text>
+    <rect x="582" y="40" width="218" height="320" rx="8" fill="#1a2236" stroke="#8b5cf6" stroke-width="1.5"/>
+    <text x="691" y="62" text-anchor="middle" fill="#a78bfa" font-size="9" font-weight="700" letter-spacing="1">SIGNOZ BINARY (Go 1.24)</text>
+    <rect x="596" y="72" width="190" height="44" rx="5" fill="#221c35" stroke="#8b5cf6" stroke-width="0.8"/>
+    <text x="691" y="92" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="500">API Server (gorilla/mux)</text>
+    <text x="691" y="108" text-anchor="middle" fill="#5c6370" font-size="9">:8080 public · :8085 private · v1–v5 endpoints</text>
+    <rect x="596" y="124" width="190" height="38" rx="5" fill="#221c35" stroke="#8b5cf6" stroke-width="0.8"/>
+    <text x="691" y="142" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="500">Query Service</text>
+    <text x="691" y="156" text-anchor="middle" fill="#5c6370" font-size="9">QueryBuilder · ClickHouseReader · Querier</text>
+    <rect x="596" y="170" width="90" height="36" rx="5" fill="#221c35" stroke="#8b5cf6" stroke-width="0.8"/>
+    <text x="641" y="187" text-anchor="middle" fill="#c4b5fd" font-size="10">Ruler</text>
+    <text x="641" y="200" text-anchor="middle" fill="#5c6370" font-size="9">alert eval</text>
+    <rect x="694" y="170" width="92" height="36" rx="5" fill="#221c35" stroke="#8b5cf6" stroke-width="0.8"/>
+    <text x="740" y="187" text-anchor="middle" fill="#c4b5fd" font-size="10">AlertManager</text>
+    <text x="740" y="200" text-anchor="middle" fill="#5c6370" font-size="9">notify</text>
+    <rect x="596" y="214" width="90" height="36" rx="5" fill="#221c35" stroke="#8b5cf6" stroke-width="0.8"/>
+    <text x="641" y="231" text-anchor="middle" fill="#c4b5fd" font-size="10">OpAMP</text>
+    <text x="641" y="245" text-anchor="middle" fill="#5c6370" font-size="9">log pipelines</text>
+    <rect x="694" y="214" width="92" height="36" rx="5" fill="#221c35" stroke="#8b5cf6" stroke-width="0.8"/>
+    <text x="740" y="231" text-anchor="middle" fill="#c4b5fd" font-size="10">Frontend</text>
+    <text x="740" y="245" text-anchor="middle" fill="#5c6370" font-size="9">ReactJS SPA</text>
+    <rect x="596" y="258" width="190" height="34" rx="5" fill="#1e2a1a" stroke="#fbbf24" stroke-width="0.8"/>
+    <text x="691" y="276" text-anchor="middle" fill="#fde68a" font-size="10">SQLite (rules · orgs · users)</text>
+    <line x1="691" y1="356" x2="691" y2="382" stroke="#4b5e7f" stroke-width="1.5" marker-end="url(#arr)"/>
+    <rect x="626" y="382" width="130" height="20" rx="4" fill="#1e2638" stroke="#2a3347"/>
+    <text x="691" y="396" text-anchor="middle" fill="#8892a4" font-size="10">Browser / User</text>
+  </svg>
+</div>
+
+<h3 class="section" id="arch-components">Core Components</h3>
+<div class="card-grid">
+  <div class="card"><div class="card-icon">🗄️</div><div class="card-title">ClickHouse</div><div class="card-desc">Columnar OLAP DB. All traces, metrics, logs. Configurable TTL per signal.</div></div>
+  <div class="card"><div class="card-icon">📡</div><div class="card-title">OTel Collector</div><div class="card-desc">Custom-built collector. Receives OTLP/Jaeger/Zipkin, enriches, writes to ClickHouse.</div></div>
+  <div class="card"><div class="card-icon">⚙️</div><div class="card-title">Query Service (Go)</div><div class="card-desc">Core backend. API handling, SQL via QueryBuilder, caching, alert eval.</div></div>
+  <div class="card"><div class="card-icon">🔔</div><div class="card-title">Ruler + AlertManager</div><div class="card-desc">Ruler evaluates rules on schedule. AlertManager deduplicates and routes.</div></div>
+  <div class="card"><div class="card-icon">🔧</div><div class="card-title">OpAMP</div><div class="card-desc">Dynamically configures log collection pipelines in the OTel Collector.</div></div>
+  <div class="card"><div class="card-icon">🖥️</div><div class="card-title">Frontend (React)</div><div class="card-desc">TypeScript SPA. Redux + React Query. Traces, logs, metrics, alerts.</div></div>
+</div>
+
+<h2 class="section" id="arch-frontend">Frontend Architecture</h2>
+<p>React 18 TypeScript SPA built with Webpack. Ant Design components, Redux for global state, React Query for server data. All pages lazy-loaded. RBAC enforced at route and component level.</p>
+
+<div class="diagram-wrap">
+  <div class="diagram-title">Provider Hierarchy & State Ownership</div>
+  <svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" class="diagram-svg diagram-svg-max-760">
+    <rect x="14" y="14" width="330" height="292" rx="8" fill="#1a2236" stroke="#2a3347" stroke-width="1.5"/>
+    <text x="179" y="34" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="700" letter-spacing="1">PROVIDER HIERARCHY (index.tsx)</text>
+    <rect x="28" y="44" width="302" height="30" rx="5" fill="#1c2d40" stroke="#3b82f6" stroke-width="1"/>
+    <text x="179" y="63" text-anchor="middle" fill="#60a5fa" font-size="11">HelmetProvider (document head)</text>
+    <rect x="42" y="82" width="274" height="30" rx="5" fill="#1c2d40" stroke="#3b82f6" stroke-width="1"/>
+    <text x="179" y="101" text-anchor="middle" fill="#60a5fa" font-size="11">ThemeProvider + TimezoneProvider</text>
+    <rect x="56" y="120" width="246" height="30" rx="5" fill="#1c2d40" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="179" y="139" text-anchor="middle" fill="#c4b5fd" font-size="11">QueryClientProvider (React Query)</text>
+    <rect x="70" y="158" width="218" height="30" rx="5" fill="#1c2d40" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="179" y="177" text-anchor="middle" fill="#c4b5fd" font-size="11">Redux Provider</text>
+    <rect x="84" y="196" width="190" height="30" rx="5" fill="#221c35" stroke="#f97316" stroke-width="1"/>
+    <text x="179" y="215" text-anchor="middle" fill="#fb923c" font-size="11">AppProvider (user · license · flags)</text>
+    <rect x="98" y="234" width="162" height="30" rx="5" fill="#221c35" stroke="#f97316" stroke-width="1"/>
+    <text x="179" y="253" text-anchor="middle" fill="#fb923c" font-size="11">AppRoutes + PrivateRoute (RBAC)</text>
+    <text x="179" y="290" text-anchor="middle" fill="#5c6370" font-size="9">ADMIN · EDITOR · VIEWER enforced per route + component</text>
+    <rect x="360" y="14" width="386" height="144" rx="8" fill="#1a2236" stroke="#2a3347" stroke-width="1.5"/>
+    <text x="553" y="34" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="700" letter-spacing="1">STATE MANAGEMENT</text>
+    <rect x="374" y="44" width="108" height="30" rx="5" fill="#1e2638" stroke="#3b82f6" stroke-width="1"/>
+    <text x="428" y="63" text-anchor="middle" fill="#60a5fa" font-size="10">Redux</text>
+    <rect x="490" y="44" width="108" height="30" rx="5" fill="#1e2638" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="544" y="63" text-anchor="middle" fill="#c4b5fd" font-size="10">React Query</text>
+    <rect x="606" y="44" width="124" height="30" rx="5" fill="#1e2638" stroke="#10b981" stroke-width="1"/>
+    <text x="668" y="63" text-anchor="middle" fill="#34d399" font-size="10">Context API</text>
+    <text x="428" y="98" text-anchor="middle" fill="#5c6370" font-size="9">global UI state</text>
+    <text x="544" y="98" text-anchor="middle" fill="#5c6370" font-size="9">server data + cache</text>
+    <text x="668" y="98" text-anchor="middle" fill="#5c6370" font-size="9">dashboard · QB</text>
+    <text x="428" y="114" text-anchor="middle" fill="#8892a4" font-size="9">store/</text>
+    <text x="544" y="114" text-anchor="middle" fill="#8892a4" font-size="9">QueryClientProvider</text>
+    <text x="668" y="114" text-anchor="middle" fill="#8892a4" font-size="9">providers/</text>
+    <text x="428" y="138" text-anchor="middle" fill="#5c6370" font-size="9">version, app flags</text>
+    <text x="544" y="138" text-anchor="middle" fill="#5c6370" font-size="9">telemetry, API calls</text>
+    <text x="668" y="138" text-anchor="middle" fill="#5c6370" font-size="9">dashboard, query</text>
+    <rect x="360" y="170" width="386" height="136" rx="8" fill="#1a2236" stroke="#2a3347" stroke-width="1.5"/>
+    <text x="553" y="190" text-anchor="middle" fill="#8892a4" font-size="9" font-weight="700" letter-spacing="1">LAZY-LOADED PAGES</text>
+    <rect x="374" y="200" width="80" height="22" rx="4" fill="#1e2638" stroke="#2a3347"/>
+    <text x="414" y="215" text-anchor="middle" fill="#e2e8f0" font-size="9">Services</text>
+    <rect x="462" y="200" width="80" height="22" rx="4" fill="#1e2638" stroke="#2a3347"/>
+    <text x="502" y="215" text-anchor="middle" fill="#e2e8f0" font-size="9">Traces Expl.</text>
+    <rect x="550" y="200" width="80" height="22" rx="4" fill="#1e2638" stroke="#2a3347"/>
+    <text x="590" y="215" text-anchor="middle" fill="#e2e8f0" font-size="9">Logs Expl.</text>
+    <rect x="638" y="200" width="92" height="22" rx="4" fill="#1e2638" stroke="#2a3347"/>
+    <text x="684" y="215" text-anchor="middle" fill="#e2e8f0" font-size="9">Dashboards</text>
+    <rect x="374" y="230" width="80" height="22" rx="4" fill="#1e2638" stroke="#2a3347"/>
+    <text x="414" y="245" text-anchor="middle" fill="#e2e8f0" font-size="9">Alerts</text>
+    <rect x="462" y="230" width="80" height="22" rx="4" fill="#1e2638" stroke="#2a3347"/>
+    <text x="502" y="245" text-anchor="middle" fill="#e2e8f0" font-size="9">Metrics</text>
+    <rect x="550" y="230" width="80" height="22" rx="4" fill="#1e2638" stroke="#2a3347"/>
+    <text x="590" y="245" text-anchor="middle" fill="#e2e8f0" font-size="9">Infra</text>
+    <rect x="638" y="230" width="92" height="22" rx="4" fill="#1e2638" stroke="#2a3347"/>
+    <text x="684" y="245" text-anchor="middle" fill="#e2e8f0" font-size="9">Settings</text>
+    <text x="553" y="292" text-anchor="middle" fill="#5c6370" font-size="9">Webpack 5 · Dev HMR on :3301 · Prod: code-split, gzip, Sentry source maps</text>
+  </svg>
+</div>
+
+<h2 class="section" id="arch-backend">Backend Architecture</h2>
+<p>Single Go 1.24 binary. API server exposes <code>:8080</code> (public) and <code>:8085</code> (private). The <strong>provider pattern</strong> is used throughout — each subsystem is a typed interface with pluggable implementations wired via <code>pkg/signoz</code>.</p>
+
+<h2 class="section" id="arch-dataflow">Data Flow Pipeline</h2>
+<div class="diagram-wrap">
+  <div class="diagram-title">Ingestion → Storage → Query → Visualise</div>
+  <svg viewBox="0 0 760 100" xmlns="http://www.w3.org/2000/svg" class="diagram-svg diagram-svg-max-760">
+    <defs><marker id="a3" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#4b5e7f"/></marker></defs>
+    <rect x="8" y="20" width="108" height="52" rx="6" fill="#1e2638" stroke="#3b82f6" stroke-width="1.2"/>
+    <text x="62" y="46" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600">App</text>
+    <text x="62" y="61" text-anchor="middle" fill="#5c6370" font-size="9">OTel SDK</text>
+    <line x1="116" y1="46" x2="144" y2="46" stroke="#4b5e7f" stroke-width="1.5" marker-end="url(#a3)"/>
+    <text x="130" y="40" text-anchor="middle" fill="#5c6370" font-size="8">OTLP</text>
+    <rect x="146" y="20" width="128" height="52" rx="6" fill="#1e2638" stroke="#f97316" stroke-width="1.2"/>
+    <text x="210" y="46" text-anchor="middle" fill="#fb923c" font-size="11" font-weight="600">OTel Collector</text>
+    <text x="210" y="61" text-anchor="middle" fill="#5c6370" font-size="9">receive · process · export</text>
+    <line x1="274" y1="46" x2="302" y2="46" stroke="#4b5e7f" stroke-width="1.5" marker-end="url(#a3)"/>
+    <text x="288" y="40" text-anchor="middle" fill="#5c6370" font-size="8">write</text>
+    <rect x="304" y="20" width="128" height="52" rx="6" fill="#1e2638" stroke="#10b981" stroke-width="1.2"/>
+    <text x="368" y="46" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">ClickHouse</text>
+    <text x="368" y="61" text-anchor="middle" fill="#5c6370" font-size="9">columnar · TTL · replicated</text>
+    <line x1="432" y1="46" x2="460" y2="46" stroke="#4b5e7f" stroke-width="1.5" marker-end="url(#a3)"/>
+    <text x="446" y="40" text-anchor="middle" fill="#5c6370" font-size="8">SQL</text>
+    <rect x="462" y="20" width="128" height="52" rx="6" fill="#1e2638" stroke="#8b5cf6" stroke-width="1.2"/>
+    <text x="526" y="46" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="600">Query Service</text>
+    <text x="526" y="61" text-anchor="middle" fill="#5c6370" font-size="9">API v1–v5 · cache · builder</text>
+    <line x1="590" y1="46" x2="618" y2="46" stroke="#4b5e7f" stroke-width="1.5" marker-end="url(#a3)"/>
+    <text x="604" y="40" text-anchor="middle" fill="#5c6370" font-size="8">JSON</text>
+    <rect x="620" y="20" width="128" height="52" rx="6" fill="#1e2638" stroke="#3b82f6" stroke-width="1.2"/>
+    <text x="684" y="46" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600">Frontend</text>
+    <text x="684" y="61" text-anchor="middle" fill="#5c6370" font-size="9">React · dashboards · alerts</text>
+  </svg>
+</div>
+
+<!-- ═══ REPO STRUCTURE ═══ -->
+<h2 class="section" id="repo-structure">Repository Structure</h2>
+<pre><code>signoz/
+├── <span class="kw">frontend/</span>                   <span class="cm"># React 18 TypeScript SPA</span>
+│   ├── src/
+│   │   ├── AppRoutes/          <span class="cm"># Routes, PrivateRoute, RBAC guards</span>
+│   │   ├── api/                <span class="cm"># API client functions</span>
+│   │   ├── components/         <span class="cm"># Reusable UI components</span>
+│   │   ├── container/          <span class="cm"># AppLayout, SideNav, TopNav</span>
+│   │   ├── providers/          <span class="cm"># Context: App, Dashboard, QueryBuilder</span>
+│   │   └── store/              <span class="cm"># Redux store</span>
+│   └── src/container/OnboardingV2Container/onboarding-configs/
+│       └── onboarding-config-with-links.json  <span class="cm"># New Source / Get Started config</span>
+│
+├── <span class="kw">pkg/query-service/</span>          <span class="cm"># OSS Go backend</span>
+│   └── app/
+│       ├── clickhouseReader/   <span class="cm"># All ClickHouse reads (interfaces.Reader)</span>
+│       ├── http_handler.go     <span class="cm"># HTTP route handlers</span>
+│       └── server.go           <span class="cm"># Server struct, :8080/:8085</span>
+│
+├── <span class="kw">pkg/</span>                        <span class="cm"># Shared Go packages (OSS)</span>
+│   ├── apiserver/signozapiserver/  <span class="cm"># Route registration, OpenAPI defs</span>
+│   ├── errors/                 <span class="cm"># Structured error package</span>
+│   ├── factory/                <span class="cm"># Provider + Service lifecycle</span>
+│   ├── flagger/                <span class="cm"># Feature flag system (OpenFeature)</span>
+│   ├── modules/                <span class="cm"># Business logic modules (user, session, org)</span>
+│   ├── signoz/                 <span class="cm"># IoC container — wires all providers</span>
+│   ├── sqlstore/               <span class="cm"># SQL abstraction (Bun ORM, PostgreSQL/SQLite)</span>
+│   └── types/                  <span class="cm"># Shared domain types</span>
+│
+├── <span class="kw">ee/query-service/</span>           <span class="cm"># Enterprise-only features (never import from pkg/)</span>
+├── <span class="kw">.devenv/docker/clickhouse/</span>  <span class="cm"># Local dev ClickHouse compose</span>
+├── <span class="kw">deploy/docker/</span>              <span class="cm"># Docker Compose (standalone + HA)</span>
+├── <span class="kw">tests/integration/</span>          <span class="cm"># Python/pytest integration tests</span>
+├── <span class="kw">docs/api/openapi.yml</span>        <span class="cm"># Auto-generated OpenAPI spec</span>
+├── <span class="kw">docs/contributing/</span>         <span class="cm"># This guide's source files</span>
+└── <span class="kw">go.mod</span>                      <span class="cm"># Go 1.24.0, 300+ deps</span></code></pre>
+
+<!-- ═══ DEV ENVIRONMENT ═══ -->
+<h2 class="section" id="dev-env">Development Environment Setup</h2>
+<p>SigNoz has three main components you need to run locally: <strong>ClickHouse</strong>, <strong>Backend</strong>, and <strong>Frontend</strong>. Run <code>make help</code> to see all available Make commands.</p>
+
+<h4>Prerequisites</h4>
+<table>
+  <thead><tr><th>Tool</th><th>Version</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>Go</code></td><td>see <code>go.mod</code></td><td>Backend development</td></tr>
+    <tr><td><code>Node.js</code></td><td>see <code>frontend/.nvmrc</code></td><td>Frontend development</td></tr>
+    <tr><td><code>Yarn</code></td><td>1.x classic</td><td>Frontend package manager</td></tr>
+    <tr><td><code>Docker + Compose</code></td><td>20.10+ / v2+</td><td>ClickHouse + Postgres locally</td></tr>
+  </tbody>
+</table>
+
+<pre><code>git clone https://github.com/SigNoz/signoz.git && cd signoz</code></pre>
+
+<h3 class="section" id="dev-clickhouse">1 — Start ClickHouse</h3>
+<pre><code><span class="cm"># Starts ClickHouse single-shard single-replica + Zookeeper + schema migrations</span>
+make devenv-clickhouse
+
+<span class="cm"># Start OTel Collector (listens :4317 gRPC, :4318 HTTP)</span>
+make devenv-signoz-otel-collector
+
+<span class="cm"># Or start both at once</span>
+make devenv-up
+
+<span class="cm"># Verify</span>
+curl http://localhost:8123/ping          <span class="cm"># → Ok.</span>
+curl http://localhost:13133             <span class="cm"># → OTel Collector health</span></code></pre>
+
+<h3 class="section" id="dev-backend">2 — Run the Backend</h3>
+<pre><code><span class="cm"># OSS build (runs on :8080)</span>
+make go-run-community
+
+<span class="cm"># Verify</span>
+curl http://localhost:8080/api/v1/health   <span class="cm"># → {"status":"ok"}</span></code></pre>
+
+<h3 class="section" id="dev-frontend">3 — Run the Frontend</h3>
+<pre><code>cd frontend
+yarn install
+<span class="cm"># Create .env</span>
+echo "VITE_FRONTEND_API_ENDPOINT=http://localhost:8080" > .env
+yarn dev    <span class="cm"># starts on :3301 with HMR, auto-rebuilds on change</span></code></pre>
+
+<h4>Sending Test Data</h4>
+<pre><code><span class="cm"># OTLP gRPC: localhost:4317 | OTLP HTTP: localhost:4318</span>
+curl -X POST http://localhost:4318/v1/traces \
+  -H "Content-Type: application/json" \
+  -d '{"resourceSpans":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"test-service"}}]},"scopeSpans":[{"spans":[{"traceId":"12345678901234567890123456789012","spanId":"1234567890123456","name":"test-span","startTimeUnixNano":"1609459200000000000","endTimeUnixNano":"1609459201000000000"}]}]}]}'</code></pre>
+
+<!-- ═══ DEPLOYMENT ═══ -->
+<h2 class="section" id="deployment">Deployment Options</h2>
+<table>
+  <thead><tr><th>Mode</th><th>Config</th><th>Use Case</th><th>HA</th></tr></thead>
+  <tbody>
+    <tr><td>Docker Compose</td><td><code>deploy/docker/docker-compose.yaml</code></td><td>Single-node / dev</td><td>❌</td></tr>
+    <tr><td>Docker Compose HA</td><td><code>deploy/docker/docker-compose.ha.yaml</code></td><td>3-node CH + 3-node ZK</td><td>✅</td></tr>
+    <tr><td>Docker Swarm</td><td><code>deploy/docker-swarm/docker-compose.yaml</code></td><td>Multi-node orchestrated</td><td>Partial</td></tr>
+    <tr><td>Kubernetes</td><td>Helm charts (<code>SigNoz/charts</code>)</td><td>Cloud-native</td><td>✅</td></tr>
+    <tr><td>Quick install</td><td><code>deploy/install.sh</code></td><td>One-command Linux/macOS</td><td>❌</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- GO CONTRIBUTING — DEDICATED SECTION     -->
+<!-- ═══════════════════════════════════════ -->
+
+<h2 class="section" id="go-overview">Go Backend — Contributing Standards</h2>
+
+<div class="callout callout-purple">
+  <span class="callout-icon">📖</span>
+  <span>Before contributing to the backend, read all three primary style guides: <a href="https://go.dev/doc/effective_go">Effective Go</a>, <a href="https://go.dev/wiki/CodeReviewComments">Code Review Comments</a>, and the <a href="https://google.github.io/styleguide/go/">Google Go Style Guide</a>. These are effectively enforced in review.</span>
+</div>
+
+<div class="go-doc-grid">
+  <div class="go-doc-card" data-scroll-to="go-packages" role="button" tabindex="0"><div class="go-doc-title">📦 Packages</div><div class="go-doc-desc">Naming, layout, and conventions for pkg/ packages</div></div>
+  <div class="go-doc-card" data-scroll-to="go-abstractions" role="button" tabindex="0"><div class="go-doc-title">🧩 Abstractions</div><div class="go-doc-desc">When to introduce new types and interfaces</div></div>
+  <div class="go-doc-card" data-scroll-to="go-errors" role="button" tabindex="0"><div class="go-doc-title">🚨 Errors</div><div class="go-doc-desc">Structured error handling with pkg/errors</div></div>
+  <div class="go-doc-card" data-scroll-to="go-provider" role="button" tabindex="0"><div class="go-doc-title">🔌 Provider</div><div class="go-doc-desc">Dependency injection pattern</div></div>
+  <div class="go-doc-card" data-scroll-to="go-service" role="button" tabindex="0"><div class="go-doc-title">⚡ Service</div><div class="go-doc-desc">Managed lifecycle with factory.Service</div></div>
+  <div class="go-doc-card" data-scroll-to="go-handler" role="button" tabindex="0"><div class="go-doc-title">🌐 Handler</div><div class="go-doc-desc">HTTP handler patterns + OpenAPI</div></div>
+  <div class="go-doc-card" data-scroll-to="go-endpoint" role="button" tabindex="0"><div class="go-doc-title">🔗 Endpoint</div><div class="go-doc-desc">RESTful endpoint design</div></div>
+  <div class="go-doc-card" data-scroll-to="go-flagger" role="button" tabindex="0"><div class="go-doc-title">🚩 Flagger</div><div class="go-doc-desc">Feature flag system (OpenFeature)</div></div>
+  <div class="go-doc-card" data-scroll-to="go-sql" role="button" tabindex="0"><div class="go-doc-title">🗃️ SQL</div><div class="go-doc-desc">Database patterns and migrations</div></div>
+  <div class="go-doc-card" data-scroll-to="go-query-range" role="button" tabindex="0"><div class="go-doc-title">🔍 Query Range v5</div><div class="go-doc-desc">Design principles and invariants</div></div>
+</div>
+
+<!-- PACKAGES -->
+<h3 class="section" id="go-packages">Packages</h3>
+<p>All shared Go code lives under <code>pkg/</code>. Each package represents a distinct domain concept with a clear public interface.</p>
+<table>
+  <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Naming</strong></td><td>Short, lowercase, single-word: <code>querier</code>, <code>authz</code>, <code>cache</code>. No underscores or camelCase. Domain-specific — not generic (<code>util</code>, <code>helpers</code>, <code>common</code> are banned).</td></tr>
+    <tr><td><strong>When to create</strong></td><td>Distinct domain concept used by 2+ other packages. Do NOT create for code used in only one place — keep it local.</td></tr>
+    <tr><td><strong>Interface file</strong></td><td>File matching the package name (e.g. <code>cache.go</code> in <code>pkg/cache/</code>) defines the public interface. Keep implementation details out.</td></tr>
+    <tr><td><strong>Implementations</strong></td><td>Put each implementation in its own sub-package: <code>memorycache/</code>, <code>rediscache/</code>.</td></tr>
+    <tr><td><strong>Test helpers</strong></td><td>Put in <code>{pkg}test/</code> sub-package (e.g. <code>cachetest/</code>). Never pollute the main package with test-only code.</td></tr>
+    <tr><td><strong>Circular imports</strong></td><td>Never. Extract shared types into <code>pkg/types/</code>.</td></tr>
+    <tr><td><strong>OSS vs EE</strong></td><td>OSS code → <code>pkg/</code>. Enterprise-only → <code>ee/</code>. <strong>Never</strong> import <code>ee/</code> from <code>pkg/</code>.</td></tr>
+  </tbody>
+</table>
+<h4>Import Groups</h4>
+<pre><code><span class="kw">import</span> (
+    <span class="cm">// 1. Standard library</span>
+    <span class="str">"fmt"</span>
+    <span class="str">"net/http"</span>
+
+    <span class="cm">// 2. External dependencies</span>
+    <span class="str">"github.com/gorilla/mux"</span>
+
+    <span class="cm">// 3. Internal</span>
+    <span class="str">"github.com/SigNoz/signoz/pkg/errors"</span>
+)</code></pre>
+
+<!-- ABSTRACTIONS -->
+<h3 class="section" id="go-abstractions">Abstractions</h3>
+<p>Every exported type, interface, or wrapper is a permanent commitment. Before introducing one, answer four questions in your PR description:</p>
+<ol>
+  <li><strong>What already exists?</strong> Name the specific type/function that covers this today.</li>
+  <li><strong>What does the new abstraction add?</strong> Name the concrete capability. "Cleaner" or "more reusable" are insufficient.</li>
+  <li><strong>What does it drop?</strong> List what it cannot represent. Every gap must be justified or error-handled.</li>
+  <li><strong>Who consumes it?</strong> List all call sites. One producer + one consumer = you need a function, not a type.</li>
+</ol>
+<table>
+  <thead><tr><th>Rule</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Functions over types</strong></td><td>If it has one input and one output, write a function — not a struct. <code>func ConvertConfig(src ExternalConfig) (InternalConfig, error)</code> beats a <code>ConfigAdapter</code> struct.</td></tr>
+    <tr><td><strong>Don't duplicate external types</strong></td><td>Operate on library output directly. A partial copy silently loses data, drifts, and doubles code surface.</td></tr>
+    <tr><td><strong>Never silently discard input</strong></td><td>Unrecognised enum values, missing cases — always return an error. <code>default: return nil, fmt.Errorf("unsupported %T: %v", v, v)</code></td></tr>
+    <tr><td><strong>No lossy methods</strong></td><td>Don't add methods that strip meaning. Write standalone functions that operate on the full struct instead.</td></tr>
+    <tr><td><strong>Discover interfaces</strong></td><td>Never define an interface before you have ≥2 concrete implementations. Exception: testing mocks, which go in the consuming package.</td></tr>
+    <tr><td><strong>Wrappers must add semantics</strong></td><td>A wrapper is justified only when it adds invariants/validation the underlying type doesn't carry. Ask: what does it guarantee? If nothing — don't wrap.</td></tr>
+  </tbody>
+</table>
+<h4>When a new type IS warranted</h4>
+<ul>
+  <li><strong>Serialization boundary</strong> — must be persisted, sent over wire, or written to config.</li>
+  <li><strong>Invariant enforcement</strong> — constructor/methods enforce constraints raw data doesn't carry.</li>
+  <li><strong>Multiple distinct consumers</strong> — 3+ call sites use it in meaningfully different ways.</li>
+  <li><strong>Dependency firewall</strong> — lives in lightweight package so consumers avoid heavy import.</li>
+</ul>
+
+<!-- ERRORS -->
+<h3 class="section" id="go-errors">Errors</h3>
+<p>SigNoz has its own structured error package at <code>pkg/errors</code>. Always use it instead of the standard library.</p>
+<pre><code><span class="cm">// Instead of errors.New() or fmt.Errorf():</span>
+errors.New(typ, code, message)
+errors.Newf(typ, code, message, args...)
+errors.Wrapf(err, typ, code, message)   <span class="cm">// adds context, preserves original</span></code></pre>
+
+<table>
+  <thead><tr><th>Concept</th><th>Detail</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Typ</strong></td><td>Categorises errors, loosely coupled to HTTP/gRPC status codes. Defined in <code>pkg/errors/type.go</code>: <code>TypeInvalidInput</code>, <code>TypeNotFound</code>, <code>TypeForbidden</code>, etc. Cannot be declared outside the package.</td></tr>
+    <tr><td><strong>Code</strong></td><td>Granular categorisation within a type. Create with <code>errors.MustNewCode("thing_not_found")</code>. Must match <code>^[a-z_]+$</code> or panics. Always assign specific codes — avoid catch-all codes.</td></tr>
+    <tr><td><strong>Wrapping</strong></td><td>Use <code>errors.Wrapf</code> to add context while preserving the original error as it travels up the call stack.</td></tr>
+    <tr><td><strong>Checking</strong></td><td>Use <code>errors.As(err, errors.TypeNotFound)</code> to branch on error type. Handlers derive HTTP status codes from the type automatically.</td></tr>
+  </tbody>
+</table>
+<div class="callout callout-warn">
+  <span class="callout-icon">⚠️</span>
+  <span>Think about error handling as you write code — not as an afterthought. It is the <strong>responsibility of each function</strong> to return well-defined errors that accurately describe what went wrong.</span>
+</div>
+
+<!-- PROVIDER -->
+<h3 class="section" id="go-provider">Provider Pattern</h3>
+<p>Providers are the dependency injection mechanism. They adapt external services and deliver functionality to the application. Think of them as typed, configurable adapters wired together in <code>pkg/signoz</code>.</p>
+
+<h4>Anatomy of a provider</h4>
+<table>
+  <thead><tr><th>File</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>pkg/&lt;name&gt;/&lt;name&gt;.go</code></td><td>Public interface — other packages import this.</td></tr>
+    <tr><td><code>pkg/&lt;name&gt;/config.go</code></td><td>Configuration, implements <code>factory.Config</code>.</td></tr>
+    <tr><td><code>pkg/&lt;name&gt;/&lt;impl&gt;&lt;name&gt;/provider.go</code></td><td>Concrete implementation with <code>NewProvider</code> returning <code>factory.Provider</code>.</td></tr>
+    <tr><td><code>pkg/&lt;name&gt;/&lt;name&gt;test.go</code></td><td>Mock for use in unit tests by dependent packages.</td></tr>
+  </tbody>
+</table>
+<h4>Wiring (3 steps in pkg/signoz)</h4>
+<pre><code><span class="cm">// 1. Add config to pkg/signoz/config.go</span>
+<span class="kw">type</span> Config <span class="kw">struct</span> {
+    MyProvider myprovider.Config <span class="str">`mapstructure:"myprovider"`</span>
+}
+
+<span class="cm">// 2. Register factory in pkg/signoz/provider.go</span>
+<span class="kw">func</span> <span class="fn">NewMyProviderFactories</span>() factory.NamedMap[...] {
+    <span class="kw">return</span> factory.MustNewNamedMap(myproviderone.NewFactory())
+}
+
+<span class="cm">// 3. Instantiate in pkg/signoz/signoz.go SigNoz struct</span>
+myprovider, err := myproviderone.New(ctx, settings, config.MyProvider, <span class="str">"one/two"</span>)</code></pre>
+
+<div class="callout callout-tip">
+  <span class="callout-icon">💡</span>
+  <span>Always create a provider interface <strong>even with a single implementation</strong>. This makes it trivial to add new implementations or mocks later.</span>
+</div>
+
+<!-- SERVICE -->
+<h3 class="section" id="go-service">Service Lifecycle</h3>
+<p>A service is a component with a managed lifecycle: it starts, runs for the application's lifetime, and stops gracefully. Services are distinct from providers — a provider adapts an external dependency; a service has its own lifecycle tied to the application.</p>
+
+<h4>The factory.Service interface</h4>
+<pre><code><span class="kw">type</span> Service <span class="kw">interface</span> {
+    Start(context.Context) error  <span class="cm">// MUST BLOCK until stopped or error</span>
+    Stop(context.Context) error   <span class="cm">// causes Start to unblock</span>
+}</code></pre>
+
+<h4>Shutdown coordination — always use stopC</h4>
+<pre><code><span class="cm">// Constructor</span>
+stopC: make(<span class="kw">chan</span> <span class="kw">struct</span>{})
+
+<span class="cm">// Start: block</span>
+&lt;-provider.stopC
+
+<span class="cm">// Stop: unblock</span>
+close(provider.stopC)</code></pre>
+
+<table>
+  <thead><tr><th>Shape</th><th>Pattern</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Idle</strong></td><td><code>Start</code> blocks on <code>&lt;-stopC</code>. <code>Stop</code> closes channel, optionally cleans up.</td><td>JWT tokenizer — responds to calls, no periodic work</td></tr>
+    <tr><td><strong>Scheduled</strong></td><td><code>Start</code> runs a ticker loop with <code>select { case &lt;-stopC / case &lt;-ticker.C }</code>. Errors logged, not returned (would kill app).</td><td>Opaque tokenizer GC — periodic gc + flush</td></tr>
+  </tbody>
+</table>
+
+<h4>Wiring to the registry</h4>
+<pre><code>registry, err := factory.NewRegistry(
+    instrumentation.Logger(),
+    factory.NewNamedService(factory.MustNewName(<span class="str">"myservice"</span>), myService),
+    <span class="cm">// ... more services</span>
+)
+<span class="cm">// Registry calls Start on all services concurrently.
+// Any Start error triggers application shutdown.
+// Stop is called on all services concurrently at shutdown.</span></code></pre>
+
+<div class="callout callout-warn">
+  <span class="callout-icon">⚠️</span>
+  <span>Only return an error from <code>Start</code> if the failure is <strong>unrecoverable</strong>. Log and continue for transient errors in polling loops — returning an error shuts down the entire application.</span>
+</div>
+
+<!-- HANDLER -->
+<h3 class="section" id="go-handler">HTTP Handlers</h3>
+<p>Handlers are <strong>thin adapters</strong> — they decode HTTP requests, call the appropriate module, and return structured responses. Business logic belongs in modules (<code>pkg/modules/user</code>, <code>pkg/modules/session</code>, etc.), not in handlers.</p>
+
+<h4>Typical handler implementation</h4>
+<pre><code><span class="kw">func</span> (h *handler) <span class="fn">CreateThing</span>(rw http.ResponseWriter, req *http.Request) {
+    claims, err := authtypes.ClaimsFromContext(req.Context())
+    <span class="kw">if</span> err != nil { render.Error(rw, err); <span class="kw">return</span> }
+
+    <span class="kw">var</span> in types.PostableThing
+    <span class="kw">if</span> err := binding.JSON.BindBody(req.Body, &in); err != nil {
+        render.Error(rw, err); <span class="kw">return</span>
+    }
+
+    out, err := h.module.CreateThing(req.Context(), claims.OrgID, &in)
+    <span class="kw">if</span> err != nil { render.Error(rw, err); <span class="kw">return</span> }
+
+    render.Success(rw, http.StatusCreated, out)
+}</code></pre>
+
+<h4>Registering a route in signozapiserver</h4>
+<pre><code><span class="kw">if</span> err := router.Handle(<span class="str">"/api/v1/things"</span>, handler.New(
+    provider.authZ.AdminAccess(provider.thingHandler.CreateThing),
+    handler.OpenAPIDef{
+        ID:                <span class="str">"CreateThing"</span>,
+        Tags:              []string{<span class="str">"things"</span>},
+        Summary:           <span class="str">"Create thing"</span>,
+        Description:       <span class="str">"This endpoint creates a thing"</span>,
+        Request:           new(types.PostableThing),
+        RequestContentType: <span class="str">"application/json"</span>,
+        Response:          new(types.GettableThing),
+        SuccessStatusCode: http.StatusCreated,
+        ErrorStatusCodes:  []int{http.StatusBadRequest, http.StatusConflict},
+        SecuritySchemes:   newSecuritySchemes(types.RoleAdmin),
+    },
+)).Methods(http.MethodPost).GetError(); err != nil {
+    <span class="kw">return</span> err
+}
+
+<span class="cm">// After adding a new endpoint, regenerate the OpenAPI spec:</span>
+<span class="cm">// go run cmd/enterprise/*.go generate openapi</span></code></pre>
+
+<h4>OpenAPI schema tags</h4>
+<table>
+  <thead><tr><th>Tag</th><th>When to use</th></tr></thead>
+  <tbody>
+    <tr><td><code>required:"true"</code></td><td>The JSON key must be present (even if zero value). Different from non-null.</td></tr>
+    <tr><td><code>nullable:"true"</code></td><td>The value can be <code>null</code>. Critical for slice/map fields — Go's nil serializes to null. Mark nullable if Go code can return nil; otherwise initialize to empty slice.</td></tr>
+    <tr><td><code>Enum() []any</code></td><td>Implement on any type with a fixed set of values. Generates <code>enum</code> constraint in the spec. Required for all enum types.</td></tr>
+    <tr><td><code>JSONSchema()</code></td><td>Implement <code>jsonschema.Exposer</code> for types needing a completely custom schema (e.g. accepts string OR number).</td></tr>
+  </tbody>
+</table>
+
+<!-- ENDPOINT -->
+<h3 class="section" id="go-endpoint">Endpoint Design</h3>
+<p>Think of endpoint structure like navigating a file system. Resources should be pluralized and hierarchical.</p>
+<pre><code>POST   /v1/organizations          <span class="cm"># Create</span>
+GET    /v1/organizations/:id       <span class="cm"># Get by ID</span>
+PUT    /v1/organizations/:id       <span class="cm"># Update</span>
+DELETE /v1/organizations/:id       <span class="cm"># Delete</span>
+GET    /v1/organizations/:id/users <span class="cm"># Nested resource</span>
+GET    /v1/organizations/me/users  <span class="cm"># me = resolved via auth context</span></code></pre>
+<div class="callout callout-tip">
+  <span class="callout-icon">💡</span>
+  <span><code>me</code> endpoints are symlinks — they resolve to the authenticated user's actual org/resource via the auth mechanism. When in doubt, diagram the resource relationships as a file system tree before coding.</span>
+</div>
+
+<!-- FLAGGER -->
+<h3 class="section" id="go-flagger">Feature Flags (Flagger)</h3>
+<p>Flagger is built on <a href="https://openfeature.dev/">OpenFeature</a> (CNCF). Three components: <strong>Registry</strong> (<code>pkg/flagger/registry.go</code>) — all available flags and defaults. <strong>Flagger</strong> (<code>pkg/flagger/flagger.go</code>) — consumer interface. <strong>Providers</strong> (<code>pkg/flagger/&lt;provider&gt;flagger/</code>) — supply override values.</p>
+
+<h4>Adding a new flag (2 steps)</h4>
+<pre><code><span class="cm">// Step 1: Register in pkg/flagger/registry.go</span>
+<span class="kw">var</span> FeatureMyNewFeature = featuretypes.MustNewName(<span class="str">"my_new_feature"</span>)
+
+<span class="cm">// Add to MustNewRegistry():</span>
+&featuretypes.Feature{
+    Name:           FeatureMyNewFeature,
+    Kind:           featuretypes.KindBoolean,
+    Stage:          featuretypes.StageStable,
+    Description:    <span class="str">"Controls whether my new feature is enabled"</span>,
+    DefaultVariant: featuretypes.MustNewName(<span class="str">"disabled"</span>),
+    Variants:       featuretypes.NewBooleanVariants(),
+}
+
+<span class="cm">// Step 2 (optional): Override in config</span>
+<span class="cm">// flagger.config.boolean.my_new_feature: true</span></code></pre>
+
+<h4>Evaluating flags</h4>
+<pre><code>evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+
+<span class="cm">// With error handling</span>
+enabled, err := flagger.Boolean(ctx, flagger.FeatureMyNewFeature, evalCtx)
+
+<span class="cm">// Non-critical — returns false on error and logs</span>
+<span class="kw">if</span> flagger.BooleanOrEmpty(ctx, flagger.FeatureMyNewFeature, evalCtx) { ... }</code></pre>
+
+<div class="callout callout-info">
+  <span class="callout-icon">ℹ️</span>
+  <span>Feature names must match <code>^[a-z_]+$</code>. Export the name variable (e.g. <code>FeatureMyNewFeature</code>) for type-safe usage across packages. Providers are evaluated in order; the first non-default value wins.</span>
+</div>
+
+<!-- SQL -->
+<h3 class="section" id="go-sql">SQL & Database Patterns</h3>
+<p>SigNoz uses <strong>Bun ORM</strong> (<code>pkg/sqlstore</code>) against PostgreSQL or SQLite. The schema follows a <strong>star schema</strong> with <code>organizations</code> as the central entity — all other tables link to it via <code>org_id</code> foreign key.</p>
+
+<pre><code><span class="kw">type</span> Thing <span class="kw">struct</span> {
+    bun.BaseModel
+    ID            types.Identifiable  <span class="str">`bun:",embed"`</span>
+    SomeColumn    string              <span class="str">`bun:"some_column"`</span>
+    TimeAuditable types.TimeAuditable <span class="str">`bun:",embed"`</span>
+    OrgID         string              <span class="str">`bun:"org_id"`</span>
+}
+
+<span class="cm">// Read</span>
+err := sqlstore.BunDBCtx(ctx).NewSelect().Model(thing).Where(<span class="str">"id = ?"</span>, id).Scan(ctx)
+
+<span class="cm">// Transactions across multiple operations</span>
+err := sqlstore.RunInTxCtx(ctx, <span class="kw">func</span>(ctx context.Context) error { ... })</code></pre>
+
+<h4>Migration rules</h4>
+<ul>
+  <li>Never use <code>ON CASCADE</code> — handle deletion in application logic.</li>
+  <li>Never import from <code>pkg/types</code> inside migrations — define local types so migrations stay stable as types evolve.</li>
+  <li>No <code>Down</code> migrations for now — leave the function empty.</li>
+  <li>Always write <strong>idempotent</strong> migrations.</li>
+  <li>Dialect-specific migrations go in the <code>SQLDialect</code> interface, not inline.</li>
+  <li>All tables must have <code>id</code>, <code>created_at</code>, <code>updated_at</code>, and <code>org_id</code> (with FK to <code>organizations</code>), unless it's a transitive entity.</li>
+</ul>
+
+<!-- QUERY RANGE -->
+<h3 class="section" id="go-query-range">Query Range v5 — Design Principles</h3>
+<div class="callout callout-purple">
+  <span class="callout-icon">⚡</span>
+  <span><strong>Core principle:</strong> The user speaks OpenTelemetry. The storage speaks ClickHouse. The system translates between them. These two worlds must <em>never</em> leak into each other.</span>
+</div>
+
+<h4>The Central Type: TelemetryFieldKey</h4>
+<p>Every filter, aggregation, group-by, order-by, and select is expressed in terms of <code>TelemetryFieldKey</code>. It is identified by three dimensions: <strong>Name</strong>, <strong>FieldContext</strong> (resource / attribute / span / log / body), and <strong>FieldDataType</strong>.</p>
+
+<h4>The Abstraction Stack (must never be bypassed)</h4>
+<pre><code>StatementBuilder          <span class="cm">← orchestrates into executable SQL</span>
+  ├── AggExprRewriter     <span class="cm">← rewrites aggregation expressions</span>
+  ├── ConditionBuilder    <span class="cm">← builds WHERE predicates</span>
+  └── FieldMapper         <span class="cm">← TelemetryFieldKey → ClickHouse column</span></code></pre>
+
+<h4>Inviolable Rules</h4>
+<div class="rule-box">
+  <p><span class="rule-num">1</span>User-facing types never contain ClickHouse column names or SQL fragments.</p>
+  <p><span class="rule-num">2</span>Field-to-column translation happens <em>only</em> in <code>FieldMapper</code>.</p>
+  <p><span class="rule-num">3</span>Normalization happens once at the API boundary (<code>TelemetryFieldKey.Normalize()</code> during JSON unmarshal). Never re-parse or re-normalize downstream.</p>
+  <p><span class="rule-num">4</span>Historical aliases in <code>fieldContexts</code> (<code>tag</code>→<code>attribute</code>, <code>spanfield</code>→<code>span</code>) must <strong>never</strong> be removed — existing saved queries depend on them.</p>
+  <p><span class="rule-num">5</span>Formula evaluation (<code>A + B</code>, <code>A / B</code>) stays in Go — do not push into ClickHouse JOINs.</p>
+  <p><span class="rule-num">6</span>Zero-defaulting is aggregation-type-dependent. Only additive aggregations (<code>count</code>, <code>sum</code>, <code>rate</code>) default to zero. Statistical aggregations (<code>avg</code>, <code>min</code>, <code>max</code>, percentiles) must show gaps.</p>
+  <p><span class="rule-num">7</span>Positive operators (<code>=</code>, <code>IN</code>) implicitly assert field existence. Negative operators (<code>!=</code>, <code>NOT IN</code>) do <strong>not</strong> — they include records where the field doesn't exist.</p>
+  <p><span class="rule-num">8</span>Post-processing functions (<code>ewma</code>, <code>fillZero</code>, <code>timeShift</code>, etc.) operate on Go result sets, not in SQL.</p>
+  <p><span class="rule-num">9</span>All user-facing types reject unknown JSON fields with Levenshtein-based suggestions. Implement custom <code>UnmarshalJSON</code> with <code>DisallowUnknownFields</code>.</p>
+  <p><span class="rule-num">10</span>Query names must be unique within a composite query. Multi-aggregation refs use indexed (<code>A.0</code>) or aliased (<code>A.total</code>) notation.</p>
+  <p><span class="rule-num">11</span>Validation rules are gated by request type (<code>time_series</code>, <code>scalar</code>, <code>raw</code>, etc.).</p>
+  <p><span class="rule-num">12</span>The four-layer abstraction stack must not be bypassed or flattened.</p>
+</div>
+
+<!-- ═══ ISSUES + PR ═══ -->
+<h2 class="section" id="issues">Finding Issues to Work On</h2>
+<div class="card-grid">
+  <div class="card"><div class="card-icon">🟢</div><div class="card-title">Good First Issues</div><div class="card-desc">Label: <code>good first issue</code> — well-scoped. Best entry point.</div></div>
+  <div class="card"><div class="card-icon">🐛</div><div class="card-title">Bug Reports</div><div class="card-desc">Use Bug Report template. Include repro steps, version, expected vs actual.</div></div>
+  <div class="card"><div class="card-icon">✨</div><div class="card-title">Feature Requests</div><div class="card-desc">Use Feature Request template. Include use case and open questions.</div></div>
+  <div class="card"><div class="card-icon">🔒</div><div class="card-title">Security Issues</div><div class="card-desc">Follow Security Policy. Never open public issues for vulnerabilities.</div></div>
+</div>
+
+<h2 class="section" id="pr-workflow">Pull Request Workflow</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Branch off <code>main</code></div><pre><code>git checkout main && git pull && git checkout -b feat/my-feature</code></pre></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Keep PRs focused</div><p>One logical change per PR. Unrelated changes → separate PR.</p></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Tests pass locally</div><pre><code>yarn test && go test ./...</code></pre></div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-content"><div class="step-title">Submit and respond</div><p>No merge conflicts with <code>main</code>. Address CI failures. Respond to review comments within 1–2 business days.</p></div></div>
+</div>
+
+<p>For large contributions, split: (1) Structure — interfaces, types, configs. (2) Core implementation. (3) Docs + e2e tests.</p>
+
+<h2 class="section" id="commit-convention">Commit Convention</h2>
+<p>SigNoz follows <strong>Conventional Commits</strong>.</p>
+<pre><code><span class="kw">type</span>(<span class="fn">scope</span>): <span class="str">short description
+
+# Optional body (wrap at 72 chars)
+Closes #1234</span></code></pre>
+<table>
+  <thead><tr><th>Type</th><th>When</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><span class="commit-type ct-feat">feat</span></td><td>New feature</td><td><code>feat(logs): add regex filter</code></td></tr>
+    <tr><td><span class="commit-type ct-fix">fix</span></td><td>Bug fix</td><td><code>fix(traces): correct span duration</code></td></tr>
+    <tr><td><span class="commit-type ct-docs">docs</span></td><td>Docs only</td><td><code>docs(contributing): add Go guide</code></td></tr>
+    <tr><td><span class="commit-type ct-ref">refactor</span></td><td>No functional change</td><td><code>refactor(query-service): extract builder</code></td></tr>
+    <tr><td><span class="commit-type ct-test">test</span></td><td>Tests only</td><td><code>test(clickhouse): add reader unit tests</code></td></tr>
+    <tr><td><span class="commit-type ct-chore">chore</span></td><td>Build, deps, CI</td><td><code>chore(deps): upgrade react-query</code></td></tr>
+  </tbody>
+</table>
+
+<!-- ═══ TESTING ═══ -->
+<h2 class="section" id="testing">Testing Guide</h2>
+<h3>Frontend</h3>
+<pre><code>yarn test                           <span class="cm"># all unit tests</span>
+yarn test:coverage                  <span class="cm"># with coverage report</span>
+yarn test --watch src/components/X  <span class="cm"># watch mode</span></code></pre>
+<p>Co-locate tests: <code>ComponentName.test.tsx</code> or <code>__tests__/</code>. Use React Testing Library — test behaviour, not implementation.</p>
+
+<h3>Backend</h3>
+<pre><code>go test ./...                        <span class="cm"># all unit tests</span>
+go test -v ./pkg/query-service/...  <span class="cm"># verbose</span>
+go test -run TestQueryBuilder ./... <span class="cm"># specific test</span>
+golangci-lint run ./...              <span class="cm"># lint</span></code></pre>
+
+<h3 class="section" id="go-integration">Integration Tests</h3>
+<p>Python/pytest framework in <code>tests/integration/</code> runs against real ClickHouse, PostgreSQL, and Zookeeper via testcontainers. Wiremock provides service doubles.</p>
+
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-content"><div class="step-title">Install</div><pre><code>cd tests/integration && uv sync</code></pre></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-content"><div class="step-title">Start environment (~4 min first time)</div><pre><code>uv run pytest --basetemp=./tmp/ -vv --reuse src/bootstrap/setup.py::test_setup</code></pre></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-content"><div class="step-title">Tear down</div><pre><code>uv run pytest --basetemp=./tmp/ -vv --teardown -s src/bootstrap/setup.py::test_teardown</code></pre></div></div>
+</div>
+
+<h4>Running tests</h4>
+<pre><code>uv run pytest --basetemp=./tmp/ -vv --reuse src/              <span class="cm"># all</span>
+uv run pytest --basetemp=./tmp/ -vv --reuse src/querier/      <span class="cm"># suite</span>
+uv run pytest --basetemp=./tmp/ -vv --reuse src/auth/01_register.py::test_register  <span class="cm"># single</span></code></pre>
+
+<h4>Key rules</h4>
+<ul>
+  <li><strong>Always use <code>--reuse</code></strong> when writing tests — avoids recreating the environment.</li>
+  <li><strong>Always use <code>--teardown</code></strong> when done — avoids resource leaks.</li>
+  <li>Prefix new test files with two-digit numbers (<code>04_</code>, <code>05_</code>) for execution order.</li>
+  <li>Each suite must complete in under 10 minutes.</li>
+  <li>Test both success and failure scenarios. Use descriptive test names.</li>
+</ul>
+
+<!-- ═══ FRONTEND STANDARDS ═══ -->
+<h2 class="section" id="fe-standards">Frontend Code Standards</h2>
+<table>
+  <thead><tr><th>Area</th><th>Standard</th></tr></thead>
+  <tbody>
+    <tr><td>Language</td><td>TypeScript <code>strict: true</code>. No implicit <code>any</code>.</td></tr>
+    <tr><td>Components</td><td>Functional + hooks only. No new class components.</td></tr>
+    <tr><td>State</td><td>Server state → React Query. Global UI → Redux. Feature state → Context API.</td></tr>
+    <tr><td>Styling</td><td>Ant Design first. Styled Components for theme overrides. SCSS for legacy pages.</td></tr>
+    <tr><td>Imports</td><td>Use TS path aliases. No deep relative imports.</td></tr>
+    <tr><td>Code splitting</td><td>All page-level components must be lazy-loaded via <code>Loadable</code>.</td></tr>
+    <tr><td>RBAC</td><td>New routes must specify <code>roles</code> in route config.</td></tr>
+    <tr><td>i18n</td><td>User-visible strings in <code>public/locales/en/</code>. Use <code>useTranslation</code>.</td></tr>
+  </tbody>
+</table>
+
+<h3 class="section" id="fe-onboarding">Adding a New Data Source (Onboarding)</h3>
+<p>The onboarding "New Source / Get Started" flow is configured via JSON at <code>frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json</code>.</p>
+
+<h4>Required fields per data source object</h4>
+<table>
+  <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>dataSource</code></td><td>string</td><td>Unique kebab-case identifier (e.g. <code>"aws-ec2"</code>)</td></tr>
+    <tr><td><code>label</code></td><td>string</td><td>Display name (e.g. <code>"AWS EC2"</code>)</td></tr>
+    <tr><td><code>tags</code></td><td>string[]</td><td>Category tags: <code>AWS</code>, <code>Azure</code>, <code>database</code>, <code>logs</code>, etc.</td></tr>
+    <tr><td><code>module</code></td><td>string</td><td>Destination after onboarding: <code>apm</code>, <code>logs</code>, <code>metrics</code>, <code>dashboards</code>, <code>infra-monitoring-hosts</code>, etc.</td></tr>
+    <tr><td><code>imgUrl</code></td><td>string</td><td>Path to SVG logo: <code>"/Logos/ec2.svg"</code> — SVG required, optimize with SVGOMG before committing.</td></tr>
+  </tbody>
+</table>
+
+<h4>Checklist before submitting</h4>
+<ul>
+  <li>SVG logo exists in <code>public/Logos/</code> and has been optimized (<code>npx svgo public/Logos/your-logo.svg</code>).</li>
+  <li>Use <code>internalRedirect: true</code> only for internal app routes (<code>/integrations?...</code>), not for docs links.</li>
+  <li>Keys use kebab-case. Pattern: <code>{service}-{subtype}-{action}</code>.</li>
+  <li>Test locally at <code>http://localhost:3301/get-started-with-signoz-cloud</code> — verify the data source appears, search works, links redirect correctly, and questions show correct help text.</li>
+  <li>Tags must include at least one value; use existing tags when possible.</li>
+  <li><code>relatedSearchKeywords</code> — include name variations, lowercase, alphabetically sorted.</li>
+</ul>
+
+<!-- ═══ OTHER REPOS + COMMUNITY ═══ -->
+<h2 class="section" id="other-repos">Other Repositories</h2>
+<div class="repo-chip-row">
+  <span class="repo-chip">📦 SigNoz/charts — Helm charts</span>
+  <span class="repo-chip">📊 SigNoz/dashboards — Dashboard templates</span>
+  <span class="repo-chip">🔌 SigNoz/signoz-mcp-server — MCP server</span>
+  <span class="repo-chip">🌐 SigNoz/signoz-web — Docs website</span>
+</div>
+<p class="text-small-muted">Each repo has its own <code>CONTRIBUTING.md</code>. Always check it before submitting PRs.</p>
+
+<h2 class="section" id="community">Community & Getting Help</h2>
+<table>
+  <thead><tr><th>Channel</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><code>#contributing</code> (Slack)</td><td>General contribution questions</td></tr>
+    <tr><td><code>#contributing-frontend</code> (Slack)</td><td>Frontend-specific help</td></tr>
+    <tr><td>GitHub Discussions</td><td>Design proposals, architecture decisions</td></tr>
+    <tr><td>GitHub Issues</td><td>Bug reports, feature requests</td></tr>
+    <tr><td>Security Policy</td><td>Private vulnerability disclosure only</td></tr>
+  </tbody>
+</table>
+
+<hr/>
+<p class="footer-note">SigNoz Internal Contributor Guide · Sources: docs/contributing/, docs/contributing/go/ (10 files), docs/api/openapi.yml · March 2026</p>
+
+</main>
+</div>
+
+<script src="./app.js"></script>
+</body>
+</html>
+
